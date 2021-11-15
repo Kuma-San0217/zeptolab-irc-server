@@ -1,4 +1,4 @@
-package me.yuri0217.zeptolab.irc.server
+package me.yuri0217.zeptolab.irc.server.service
 
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
@@ -8,9 +8,11 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import me.yuri0217.zeptolab.irc.server.entities.SupportedMessages
 import me.yuri0217.zeptolab.irc.server.config.Configuration
-import me.yuri0217.zeptolab.irc.server.dto.*
+import me.yuri0217.zeptolab.irc.server.entities.*
 
+// Shared state service
 class ChannelProcessingService {
     private val currentUsers = mutableListOf<User>()
     private val usersMutex = Mutex()
@@ -54,6 +56,14 @@ class ChannelProcessingService {
                 if (possibleUser.check(Password(data = passwordToken))) {
                     possibleUser.addConnection(channelId = context.channel().id())
                     context.channel().writeAndFlush("Welcome again, $loginToken! ${System.lineSeparator()}")
+                    possibleUser.currentIrcChannel?.let {
+                        context.channel().writeAndFlush(
+                            "Last messages from channel *${it.name}*: ${System.lineSeparator()}${
+                                it.getLastMessages(Configuration.amountOfMessages)
+                                    .joinToString(System.lineSeparator()) + System.lineSeparator()
+                            }"
+                        )
+                    }
                 } else context.channel().writeAndFlush("Wrong password for $loginToken! ${System.lineSeparator()}")
             } else {
                 usersMutex.withLock {
@@ -88,15 +98,16 @@ class ChannelProcessingService {
                         user.currentIrcChannel?.disconnect(user)
                         user.currentIrcChannel = currentIrcChannel
                         currentIrcChannel.connect(user)
-                        context.channel().writeAndFlush("Entered the *$channelName* channel ${System.lineSeparator()}")
-                        currentNettyChannels.filter { channel -> user.getConnections().any { it == channel.id() } }
-                            .asFlow()
-                            .collect {
-                                it.writeAndFlush(
-                                    currentIrcChannel.getLastMessages(Configuration.amountOfMessages)
-                                        .joinToString(separator = System.lineSeparator()) + System.lineSeparator()
-                                )
-                            }
+                        context.channel()
+                            .writeAndFlush("Entered the *$channelName* channel. Last messages: ${System.lineSeparator()}")
+                        val userNettyChannels = currentNettyChannels.toList()
+                            .filter { channel -> user.getConnections().any { it == channel.id() } }
+                        userNettyChannels.asFlow().collect {
+                            it.writeAndFlush(
+                                currentIrcChannel.getLastMessages(Configuration.amountOfMessages)
+                                    .joinToString(System.lineSeparator()) + System.lineSeparator()
+                            )
+                        }
                     }
                 }
             } else context.channel()
@@ -144,10 +155,11 @@ class ChannelProcessingService {
         if (currentUser != null) {
             if (currentUser.currentIrcChannel != null) {
                 val content = Message(sentBy = currentUser, content = message)
-                currentUser.currentIrcChannel?.send(message = content)
+                currentUser.currentIrcChannel!!.send(message = content)
                 currentUser.currentIrcChannel?.getConnectedUsers()?.asFlow()?.collect { user ->
-                    user.getConnections().asFlow().collect { channelId ->
-                        currentNettyChannels.single { it.id() == channelId }.writeAndFlush(content)
+                    user.getConnections().filter { it != context.channel().id() }.asFlow().collect { channelId ->
+                        currentNettyChannels.single { it.id() == channelId }
+                            .writeAndFlush("$content ${System.lineSeparator()}")
                     }
                 }
             } else context.channel()

@@ -1,4 +1,4 @@
-package me.yuri0217.zeptolab.irc.server.dto
+package me.yuri0217.zeptolab.irc.server.entities
 
 import java.time.LocalDateTime
 
@@ -13,5 +13,5 @@ data class Message(
         else -1
     }
 
-    override fun toString(): String = content
+    override fun toString(): String = "${sentBy.login.data}: $content at $date"
 }

@@ -1,4 +1,4 @@
-package me.yuri0217.zeptolab.irc.server
+package me.yuri0217.zeptolab.irc.server.netty
 
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelPipeline
@@ -7,6 +7,7 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder
 import io.netty.handler.codec.Delimiters
 import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
+import me.yuri0217.zeptolab.irc.server.service.ChannelProcessingService
 
 
 class IrcChannelInitializer : ChannelInitializer<SocketChannel>() {

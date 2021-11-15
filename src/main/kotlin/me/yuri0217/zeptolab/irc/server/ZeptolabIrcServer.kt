@@ -5,6 +5,7 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import me.yuri0217.zeptolab.irc.server.config.Configuration
+import me.yuri0217.zeptolab.irc.server.netty.IrcChannelInitializer
 
 fun main() {
     val boss = NioEventLoopGroup()

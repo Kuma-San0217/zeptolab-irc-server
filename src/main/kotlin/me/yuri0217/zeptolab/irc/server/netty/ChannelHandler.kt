@@ -1,9 +1,10 @@
-package me.yuri0217.zeptolab.irc.server
+package me.yuri0217.zeptolab.irc.server.netty
 
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import me.yuri0217.zeptolab.irc.server.service.ChannelProcessingService
 
 class ChannelHandler(
     private val channelProcessingService: ChannelProcessingService

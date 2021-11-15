@@ -1,4 +1,4 @@
-package me.yuri0217.zeptolab.irc.server.dto
+package me.yuri0217.zeptolab.irc.server.entities
 
 import io.netty.channel.ChannelId
 import kotlinx.coroutines.sync.Mutex
@@ -14,7 +14,7 @@ data class User(
 
     fun check(password: Password) : Boolean = this.password.data == password.data
 
-    fun getConnections() : List<ChannelId> = connections
+    fun getConnections() : List<ChannelId> = connections.toList()
 
     suspend fun addConnection(channelId: ChannelId) = connectionsMutex.withLock { connections.add(channelId) }
 
